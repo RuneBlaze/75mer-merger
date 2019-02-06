@@ -1,4 +1,4 @@
-use bincode::{deserialize_from, serialize_into};
+// use bincode::{deserialize_from, serialize_into};
 use itertools::join;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -13,10 +13,23 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Write;
 mod kmer;
+use std::env;
 use self::kmer::Kmer;
-// use serde_json;
 
-const DATASET: &str = "CC010_F4396";
+// const DATASET: &str = "CC010_F4396";
+
+type Path = Vec<u32>;
+type Graph = HashMap<u32, Vec<u32>>;
+
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
+}
+
+fn dataset_name() -> String {
+    return env::args().nth(1).unwrap();
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
 struct Entry {
@@ -51,6 +64,7 @@ struct Bucket {
     left: Vec<Entry>,
     right: Vec<Entry>,
 }
+
 
 impl Bucket {
     fn new() -> Bucket {
@@ -93,15 +107,9 @@ impl Bucket {
     }
 }
 
-fn calculate_hash<T: Hash>(t: &T) -> u64 {
-    let mut s = DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
-}
-
 fn mk_entries() -> Vec<Entry> {
     let mut res = vec![];
-    let f = File::open(format!("{}.csv", DATASET)).unwrap();
+    let f = File::open(format!("{}.csv", dataset_name())).unwrap();
     let file = BufReader::new(&f);
     for (num, line) in file.lines().enumerate() {
         if num == 0 {
@@ -127,7 +135,9 @@ fn mk_entries() -> Vec<Entry> {
     return res;
 }
 
-// TODO: this is an O(n lg n) algorithm, can be converted into a linear algorithm
+// TODO: this is an O(n lg n) algorithm.
+// the thing is that, (unless we use a different hashmap)
+// it seems that this O(n lg n) algorithm outperforms using hashmap for matching
 fn equivalence_classes(coll: &mut Vec<Entry>) -> Vec<Bucket> {
     coll.sort_unstable();
     let mut buckets: Vec<Bucket> = vec![];
@@ -142,17 +152,8 @@ fn equivalence_classes(coll: &mut Vec<Entry>) -> Vec<Bucket> {
             buf = Bucket::new();
         }
     }
-
-    let mut res : HashMap<u64, Bucket> = HashMap::new();
-    for ele in coll {
-        res.entry(ele.hash).or_insert(Bucket::new());
-        res.get_mut(&ele.hash).unwrap().push(ele.clone());
-    }
-    
     return buckets;
 }
-
-type Graph = HashMap<u32, Vec<u32>>;
 
 fn mk_graph(ecs: &Vec<Bucket>, rows: &Vec<Row>) -> HashMap<u32, Vec<u32>> {
     let mut res: HashMap<u32, Vec<u32>> = HashMap::new();
@@ -165,7 +166,6 @@ fn mk_graph(ecs: &Vec<Bucket>, rows: &Vec<Row>) -> HashMap<u32, Vec<u32>> {
         for l in lhs {
             for r in rhs {
                 if is_true_edge(rows, l.id, r.id) {
-                    // res.entry(l.id).or_insert(vec![]);
                     res.get_mut(&l.id).unwrap().push(r.id);
                 }
             }
@@ -181,21 +181,21 @@ fn produce_cached_result() -> (Graph, Vec<Row>) {
     let graph = mk_graph(&ecs, &rows);
     // let serialized = serde_json::to_string(&graph).unwrap();
     // let serialized = serialize(&graph).unwrap();
-    let mut out = File::create(format!("graph_{}.bc", DATASET)).unwrap();
-    serialize_into(out, &graph).unwrap();
+    // let mut out = File::create(format!("graph_{}.bc", DATASET)).unwrap();
+    // serialize_into(out, &graph).unwrap();
     return (graph, rows);
     // fs::write(format!("graph_{}.json", DATASET), serialized).expect("should output graph");
 }
 
-fn load_graph() -> Result<Graph, Box<Error>> {
-    let file = File::open(format!("graph_{}.bc", DATASET))?;
-    let g: Graph = deserialize_from(file)?;
-    Ok(g)
-}
+// fn load_graph() -> Result<Graph, Box<Error>> {
+//     let file = File::open(format!("graph_{}.bc", DATASET))?;
+//     let g: Graph = deserialize_from(file)?;
+//     Ok(g)
+// }
 
 fn load_rows() -> Vec<Row> {
     let mut res = vec![];
-    let f = File::open(format!("{}.csv", DATASET)).unwrap();
+    let f = File::open(format!("{}.csv", dataset_name())).unwrap();
     let file = BufReader::new(&f);
     for (num, line) in file.lines().enumerate() {
         if num == 0 {
@@ -223,8 +223,6 @@ fn is_true_edge(rows: &Vec<Row>, l: u32, r: u32) -> bool {
     rows[(l) as usize].kmer.is_edge(&rows[(r) as usize].kmer)
 }
 
-type Path = Vec<u32>;
-
 fn dfs(rows: &Vec<Row>, g: &Graph) -> Vec<Path> {
     let mut res: Vec<Path> = vec![];
     let mut stack: Vec<u32> = vec![];
@@ -234,7 +232,7 @@ fn dfs(rows: &Vec<Row>, g: &Graph) -> Vec<Path> {
     for i in 0..(rows.len() as u32) {
         indegree.insert(i, 0);
     }
-    for (k, v) in g.iter() {
+    for (_k, v) in g.iter() {
         // indegree.entry(*k).or_insert(0);
         for target in v {
             let e = indegree.entry(*target).or_insert(0);
@@ -304,7 +302,7 @@ fn path_to_string(rows: &Vec<Row>, path: &Path) -> String {
 }
 
 fn process_output(rows: &Vec<Row>, paths: &Vec<Path>) -> () {
-    let mut output = File::create(format!("{}.merged.csv", DATASET)).unwrap();
+    let mut output = File::create(format!("{}.merged.csv", dataset_name())).unwrap();
     writeln!(output, "sequence,lo,hi,pre45cnt,count,path").unwrap();
     for p in paths {
         let s = path_to_string(rows, p);
@@ -324,6 +322,10 @@ fn main() {
     // let mut out = File::create("graph_WEB_FNNN.bc").unwrap();
     // serialize_into(out, &graph).unwrap();
     // fs::write("graph_WEB_FNNN.json", serialized).expect("should output graph");
+    if env::args().nth(1).is_none() {
+        panic!("please pass the dataset name as the first argument, e.g. <dataset_name>.csv must exist.");
+    }
+
     println!("process started");
     let (graph, rows) = produce_cached_result();
     println!("producing cached result");
@@ -332,19 +334,20 @@ fn main() {
     let mut paths = dfs(&rows, &graph);
     println!("sorting");
     paths.sort_unstable();
-    println!("# of paths {}", paths.len());
+    // println!("# of paths {}", paths.len());
     println!("sorting finished");
 
     let mut cnt: i64 = 0;
-
     for p in paths.iter() {
         cnt += p.len() as i64;
     }
-
     println!("{}", cnt);
-
     process_output(&rows, &paths);
-
+    println!("# of rows, previously: {}", rows.len());
+    println!("# of rows, after: {}", paths.len());
+    println!("after / prev: {}", paths.len() as f64 / rows.len() as f64);
+    let maxlen = paths.iter().max_by(|x, y| x.len().cmp(&y.len())).unwrap().len();
+    println!("max length of paths: {}", maxlen);
     // for i in 0..10 {
     //     for p in &paths[i] {
     //         println!("{:?}", rows[*p as usize].kmer.rep());
