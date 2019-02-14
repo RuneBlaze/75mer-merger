@@ -327,6 +327,7 @@ fn main() {
         panic!("please pass the dataset name as the first argument, e.g. <dataset_name>.csv must exist.");
     }
 
+    println!("# processing on dataset: {}", dataset_name());
     println!("process started");
     let (graph, rows) = produce_cached_result();
     println!("producing cached result");
