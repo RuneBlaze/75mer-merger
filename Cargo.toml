@@ -1,0 +1,13 @@
+[package]
+name = "rust-pairer"
+version = "0.1.0"
+authors = ["Runeblaze <lbq@live.unc.edu>"]
+edition = "2018"
+
+[dependencies]
+itertools = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bincode = "1.0.1"
+bit-vec = "0.5.0"
+hashbrown = "0.1"

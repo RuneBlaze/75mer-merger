@@ -117,8 +117,9 @@ fn mk_entries() -> Vec<Entry> {
         }
         let l = line.unwrap();
         let x = l.split(",").next().unwrap();
-        let pre = &x[0..74];
-        let suf = &x[1..75];
+        let len = x.len();
+        let pre = &x[0..(len - 1)];
+        let suf = &x[1..len];
         let pre_h = calculate_hash(&pre);
         let suf_h = calculate_hash(&suf);
         res.push(Entry {
