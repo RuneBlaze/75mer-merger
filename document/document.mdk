@@ -1,0 +1,187 @@
+Title         : HW5 Report
+Author        : Baqiao Liu
+Logo          : False
+Bibliography: hw5.bib
+
+[TITLE]
+
+# Introduction
+
+I want to see the differences in Clustal Omega [@sievers_fast_2011] and PASTA's performance
+across the 1000M1, 1000M4, and 16S.M datasets for multiple sequence
+alignment (MSA) and producing MSA for tree estimation. This is motivated
+partially by the different goals of Clustal Omega and PASTA: Clustal Omega
+explicitly trades accuracy for great scalability, while PASTA
+claims accuracy as one of its selling points. The dataset conditions
+also help differentiate these two methods: 1000M1 and 1000M4 are simulated
+datasets with 1000M1 harder than 1000M4, and 16S.M comes from real-world data.
+These variations in the dataset conditions give perspectives on performance
+on simulated vs real-world data, and easy simulated data (with low rate of
+indel or substitution) vs harder simulated data (higher rates of indel
+and substitution). I simply expect Clustal Omega to be less accurate in all metrics
+across all datasets and the trees inferred based on Clustal Omega would
+be quite less accurate compared to that from PASTA.
+
+# Methods
+
+The 1000M1, 1000M4, 16S.M datasets were preprocessed by stripping the gaps
+of the input alignments (true alignments in 1000M1/4, the only alignment
+supplied in 16S.M) and then used as inputs to the MSA
+tools. Due to running time concerns, only replicates numbered 1, 2, 3, 5, 6, 7, 11, 16, 19
+were run in the 1000M1 and 1000M4 datasets.
+ The output alignments were then used by FastME 2.1.6.1
+to infer trees using NJ with the JC69 Model (the command was `fastme --dna=J -m N -i $phy` where `$phy`
+is the MSA output converted to PHYLIP format). See the Appendix for the source code for `RunClustalOmega`
+and `RunPasta` to see the exact commands used to execute on the datasets and
+the environment setup. Nonetheless, in short, both of the alignment tools and FastME were run with
+default options. The resulting MSA was compared to the true MSA
+using FastSP 1.6.0 (with the default setting) for obtaining the error metrics SP-FN and SP-FP, the inferred tree is then compared to the true tree using
+code written by Erin Molloy with my own modifications which produces the FP and FN rates.
+
+# Results
+
+The error rates are visualized in the following figures, going horizontally
+varies the error metric visualized, going vertically varies the dataset.
+
+When the datasets are on the simulated datasets, boxplots are used. Otherwise
+since I only had one replicate for the real data, visualizations for the
+real data uses bar plots. Note that the y-axis varies in max value. 
+
+## SP-FN and SP-FP on MSA
+
+![1000M4_SP]
+
+[1000M4_SP]: images/1000M4_SP.png "1000M4_SP" { width:auto; max-width:90% }
+
+
+
+![1000M1_SP]
+
+[1000M1_SP]: images/1000M1_SP.png "1000M1_SP" { width:auto; max-width:90% }
+
+
+
+![16S.M_SP copy]
+
+[16S.M_SP copy]: images/16S.M_SP-copy.png "16S.M_SP copy" { width:auto; max-width:90% }
+
+## FP and FN Rates on Inferred Trees
+
+In the 1000M1 dataset, likely because how inaccurate many of the Clustal Omega produced alignments
+were, FastME was not able to produce trees from the alignment. The replicates that
+did not lead to trees were discarded altogether in the 1000M1 analysis here.
+
+
+![FP_Trees_1000M4]
+
+[FP_Trees_1000M4]: images/FP_Trees_1000M4.png "FP_Trees_1000M4" { width:auto; max-width:90% }
+
+![FP_Trees_1000M1]
+
+[FP_Trees_1000M1]: images/FP_Trees_1000M1.png "FP_Trees_1000M1" { width:auto; max-width:90% }
+
+
+![FP_Trees_16S.M]
+
+[FP_Trees_16S.M]: images/FP_Trees_16S.M.png "FP_Trees_16S.M" { width:auto; max-width:90% }
+
+
+# Discussion
+
+Across datasets, one observation that surprised me a little is that in the
+easy dataset (1000M4), Clustal Omega ended up performing quite close to PASTA, especially
+in producing MSAs for tree estimation. In the hard dataset (1000M1), Clustal
+Omega rapidly degraded: the difference in error metrics was extremely high
+when only looking at alignment errors: the gap is larger than I expected, and
+inferring trees brings them closer in their error rates. Their performance
+on 16S.M is what I cannot understand: they are performing similarly well. While
+this could be their incorrect model assumptions, I am still confused
+on why the true model behind this real world dataset differs so much from
+the models in 1000M1/4 as evidenced by the performances of these two methods.
+
+Both methods do worse on harder datasets, and the quality of the MSAs
+seem highly correlated to the quality of the tree estimated.
+
+
+
+In conclusion, I was fully expecting Clustal Omega in general getting
+inferior accuracy compared to PASTA. Their similar performance on the non-simulated
+dataset confuses me. It is no surprise to me that the the harder the dataset
+becomes, the more obvious Clustal Omega's weakness shows.
+
+
+# Appendix
+
+## Setup Script for the Environment
+
+I just want to note that this script could use some serious improvement.
+
+```
+#!/bin/bash
+apt-get update
+update-alternatives --install /usr/bin/python python /usr/bin/python3 10
+apt-get -y install python3-setuptools
+apt-get -y install default-jdk
+apt-get -y install libgomp1
+
+# setup pasta
+mkdir ~/pasta-code
+cd ~/pasta-code || exit
+
+git clone https://github.com/smirarab/pasta.git
+git clone https://github.com/smirarab/sate-tools-linux.git
+cd pasta || exit
+python setup.py develop
+chmod +x run_pasta.py
+
+# so that we can just "pasta" something
+ln -s "$(pwd -P)/run_pasta.py" /usr/local/bin/pasta
+
+# reset state, now setup clustal omega
+cd ~ || exit
+wget -O clustalo-1.2.4 http://www.clustal.org/omega/clustalo-1.2.4-Ubuntu-x86_64
+chmod u+x clustalo-1.2.4
+ln -s "$(pwd -P)/clustalo-1.2.4" /usr/local/bin/clustalo
+
+chmod -R 777 ~
+chmod 777 clustalo-1.2.4
+
+# fasttree, double precision ver
+wget -O FastTree http://www.microbesonline.org/fasttree/FastTreeDbl
+chmod u+x FastTree
+ln -s "$(pwd -P)/FastTree" /usr/local/bin/FastTree
+
+chmod 777 /usr/local/bin/FastTree
+chmod 777 FastTree
+
+cd ~ || exit
+
+cat > /usr/local/bin/RunClustalOmega <<'HERE'
+#!/bin/bash
+CUR=$(pwd -P)
+TMPDIR=$(mktemp -d)
+cp "$1" "$TMPDIR/in.fa"
+pushd "$TMPDIR" || exit
+clustalo -i in.fa -o result.aln
+tar -czvf "$CUR/$2" result.aln
+popd || exit
+HERE
+
+chmod +x /usr/local/bin/RunClustalOmega
+
+cat > /usr/local/bin/RunPasta <<'HERE'
+#!/bin/bash
+CUR=$(pwd -P)
+TMPDIR=$(mktemp -d)
+cp "$1" "$TMPDIR/in.fa"
+pushd "$TMPDIR" || exit
+pasta -i in.fa
+mv pastajob.marker001.in.fa.aln result.aln
+tar -czvf "$CUR/$2" result.aln pastajob.out.txt pastajob.err.txt
+popd || exit
+HERE
+
+chmod 777 /usr/local/bin/RunPasta
+```
+
+# Bibliography
