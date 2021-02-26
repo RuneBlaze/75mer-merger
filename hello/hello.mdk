@@ -7,7 +7,7 @@ Bibliography: citations.bib
 
 # Description
 
-Graph Neural Networks (GNNs) are vulnerable to adversarial attacks [@zugner_adversarial_2018] [@dai_adversarial_2018]. In 2020, Pro-GNN [@jin_graph_2020] was proposed as
+Graph Neural Networks (GNNs) are vulnerable to adversarial attacks [@zugner_adversarial_2018; @dai_adversarial_2018]. In 2020, Pro-GNN [@jin_graph_2020] was proposed as
 a defense against several forms of adversarial attacks by learning the graph structure and GNN parameters
 simutaneously. In their experiments, Pro-GNN defended much better compared to other methods of defense.
 A cursory look at Pro-GNN shows that their evaluation and experiment setup only includes
@@ -33,7 +33,7 @@ extended experiments and develop the "best" targeted attack against Pro-GNN.
 
 # Paper List
 
-See the references. Additional papers not cited above include [@wu_adversarial_2019] [@zhu_robust_2019].
+See the references. Additional papers not cited above include [@wu_adversarial_2019; @zhu_robust_2019].
 
 
 [reference manual]: http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html  "Madoko reference manual"
