@@ -1,7 +1,7 @@
 Title         : Project Proposal: Evaluating and Attacking Pro-GNN
 Author        : Baqiao Liu
 Logo          : True
-Bibliography: citations.bib
+Bib : citations
 
 [TITLE]
 
@@ -34,6 +34,8 @@ extended experiments and develop the "best" targeted attack against Pro-GNN.
 # Paper List
 
 See the references. Additional papers not cited above include [@wu_adversarial_2019; @zhu_robust_2019].
+
+[BIB]
 
 
 [reference manual]: http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html  "Madoko reference manual"
