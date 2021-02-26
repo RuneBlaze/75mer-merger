@@ -1,0 +1,39 @@
+Title         : Project Proposal: Evaluating and Attacking Pro-GNN
+Author        : Baqiao Liu
+Logo          : True
+Bibliography: citations.bib
+
+[TITLE]
+
+# Description
+
+Graph Neural Networks (GNNs) are vulnerable to adversarial attacks [@zugner_adversarial_2018] [@dai_adversarial_2018]. In 2020, Pro-GNN [@jin_graph_2020] was proposed as
+a defense against several forms of adversarial attacks by learning the graph structure and GNN parameters
+simutaneously. In their experiments, Pro-GNN defended much better compared to other methods of defense.
+A cursory look at Pro-GNN shows that their evaluation and experiment setup only includes
+several attack types that are claimed to be the state of the art. With other attacks [@dai_adversarial_2018] not evaluated in their experiments,
+the naive question to ask is how well Pro-GNN defends against these other attacks (although the obvious expectation is that these other atatcks do worse than SOTA).
+If Pro-GNN defends against all these types of attacks well, designing an attack
+that does well against Pro-GNN becomes of obvious interest.
+
+This project attempts to first evaluate Pro-GNN under more attacks (right now the plan is to only do what they called
+targeted attacks -- attacks on specific nodes to fool GNNs into misclassification) to extend their experiment and evaluation,
+and see if more conclusions could be drawn. The bulk of this project aims to then draw from the results of these
+extended experiments and develop the "best" targeted attack against Pro-GNN.
+
+# Preliminary Plan
+
+- 3/10/2021: finish reading the relevant papers; select attacks to evaluate against Pro-GNN
+- 3/15/2021: submit the experiments of how these attacks fair against Pro-GNN
+- 3/20/2021: evaluation of the experiment results; start second round of experiments if needed
+- 3/30/2021: finish sketching ideas for my attack; submit mid-term report
+- 4/15/2021: finish designing and coding novel attacks; start experiments; do more rounds of design/experiments if needed
+- 4/30/2021: experiments all done; start analyzing the results and writing
+- 5/05/2021: report deadline
+
+# Paper List
+
+See the references. Additional papers not cited above include [@wu_adversarial_2019] [@zhu_robust_2019]
+
+
+[reference manual]: http://research.microsoft.com/en-us/um/people/daan/madoko/doc/reference.html  "Madoko reference manual"
